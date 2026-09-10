@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
@@ -8,17 +8,12 @@ import Button from '@/components/ui/Button';
 const TODAY = new Date().toISOString().slice(0, 10);
 
 export default function ExpenseForm({ categories, initialValues, onSubmit, onCancel }) {
-  const [categoryId, setCategoryId] = useState(initialValues?.category_id ?? categories[0]?.id ?? '');
-
-  // Categories load asynchronously; if this form mounted before they arrived,
-  // categoryId's initial value falls back to '' and never gets to see the
-  // list. Once categories show up, default to the first one.
-  useEffect(() => {
-    if (!initialValues && categoryId === '' && categories.length > 0) {
-      setCategoryId(categories[0].id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categories]);
+  // categoryId only tracks an explicit user pick. Categories load
+  // asynchronously, so the default (first category) is computed at render
+  // time below rather than baked into state — that way it's still correct
+  // even if this form mounted before the category list arrived.
+  const [categoryId, setCategoryId] = useState(initialValues?.category_id ?? '');
+  const selectedCategoryId = categoryId || categories[0]?.id || '';
   const [amount, setAmount] = useState(initialValues?.amount ?? '');
   const [description, setDescription] = useState(initialValues?.description ?? '');
   const [date, setDate] = useState(initialValues?.date ?? TODAY);
@@ -33,7 +28,7 @@ export default function ExpenseForm({ categories, initialValues, onSubmit, onCan
     setSubmitting(true);
     try {
       await onSubmit({
-        category_id: Number(categoryId),
+        category_id: Number(selectedCategoryId),
         amount: Number(amount),
         description,
         date,
@@ -51,7 +46,7 @@ export default function ExpenseForm({ categories, initialValues, onSubmit, onCan
       <Select
         id="category"
         label="Category"
-        value={categoryId}
+        value={selectedCategoryId}
         onChange={(e) => setCategoryId(e.target.value)}
         required
       >

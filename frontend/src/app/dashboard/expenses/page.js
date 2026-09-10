@@ -39,9 +39,15 @@ export default function ExpensesPage() {
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [month, categoryId, search]);
+  // Reset to page 1 whenever a filter changes, so we don't stay on e.g. page
+  // 3 of a now-empty result set. This adjusts state during render (React's
+  // documented pattern for "derived state that resets when an input
+  // changes") instead of an extra effect + re-render round trip.
+  const [prevFilters, setPrevFilters] = useState({ month, categoryId, search });
+  if (prevFilters.month !== month || prevFilters.categoryId !== categoryId || prevFilters.search !== search) {
+    setPrevFilters({ month, categoryId, search });
+    if (page !== 1) setPage(1);
+  }
 
   useEffect(() => {
     loadExpenses();

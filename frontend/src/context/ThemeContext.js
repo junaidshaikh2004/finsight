@@ -10,6 +10,13 @@ export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState('light');
 
   useEffect(() => {
+    // Deliberately not a lazy useState initializer: reading `document` during
+    // the render itself would give the server render (no DOM) and the
+    // client's first hydration render different results, since the inline
+    // script has already toggled the class by then — a hydration mismatch.
+    // Matching the server's default here first, then correcting after mount,
+    // is the standard fix (the same approach next-themes uses).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
   }, []);
 

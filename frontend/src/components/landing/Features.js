@@ -35,7 +35,7 @@ export default function Features() {
   return (
     <section id="features" className="mx-auto max-w-6xl px-6 pb-24">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">Everything you need, nothing you don't</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">Everything you need, nothing you don&apos;t</h2>
         <p className="mt-4 text-muted">
           A focused set of tools for staying on top of your personal finances.
         </p>
