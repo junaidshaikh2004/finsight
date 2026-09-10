@@ -90,6 +90,56 @@ router.get('/', async (req, res) => {
   });
 });
 
+// Returns the current month's total + category breakdown, plus the last 6
+// months' totals for the trend chart — all computed with SQL GROUP BY so the
+// dashboard never has to pull and sum raw expense rows itself.
+router.get('/summary', async (req, res) => {
+  const { month } = req.query;
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+    return res.status(400).json({ error: "A month query param in 'YYYY-MM' format is required" });
+  }
+
+  const byCategoryResult = await pool.query(
+    `SELECT c.name AS category_name, SUM(e.amount) AS total
+     FROM expenses e
+     JOIN categories c ON c.id = e.category_id
+     WHERE e.user_id = $1 AND TO_CHAR(e.date, 'YYYY-MM') = $2
+     GROUP BY c.name
+     ORDER BY total DESC`,
+    [req.userId, month]
+  );
+  const byCategory = byCategoryResult.rows.map((row) => ({
+    category: row.category_name,
+    total: Number(row.total),
+  }));
+  const totalThisMonth = byCategory.reduce((sum, row) => sum + row.total, 0);
+
+  // Trend covers the 6 months ending at `month`, oldest first.
+  const [year, monthNum] = month.split('-').map(Number);
+  const monthKeys = [];
+  for (let i = 5; i >= 0; i--) {
+    const index = year * 12 + (monthNum - 1) - i;
+    const y = Math.floor(index / 12);
+    const m = (index % 12) + 1;
+    monthKeys.push(`${y}-${String(m).padStart(2, '0')}`);
+  }
+  const rangeStart = `${monthKeys[0]}-01`;
+  const rangeEndDate = new Date(Date.UTC(year, monthNum, 0)); // last day of `month`
+  const rangeEnd = rangeEndDate.toISOString().slice(0, 10);
+
+  const trendResult = await pool.query(
+    `SELECT TO_CHAR(date, 'YYYY-MM') AS month, SUM(amount) AS total
+     FROM expenses
+     WHERE user_id = $1 AND date >= $2 AND date <= $3
+     GROUP BY month`,
+    [req.userId, rangeStart, rangeEnd]
+  );
+  const totalsByMonth = new Map(trendResult.rows.map((row) => [row.month, Number(row.total)]));
+  const trend = monthKeys.map((key) => ({ month: key, total: totalsByMonth.get(key) || 0 }));
+
+  res.json({ totalThisMonth, byCategory, trend });
+});
+
 router.get('/export', async (req, res) => {
   const { month, category_id, search } = req.query;
   const { whereClause, params } = buildFilters(req.userId, { month, category_id, search });
