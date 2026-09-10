@@ -21,8 +21,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/budgets', require('./routes/budgets'));
-
-// Feature routes are mounted here as they're built (insights).
+app.use('/api/insights', require('./routes/insights'));
 
 // 404 handler for unmatched API routes
 app.use((req, res) => {
