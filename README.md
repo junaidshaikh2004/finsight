@@ -3,6 +3,9 @@
 A personal expense tracker with AI-generated spending insights. Built as a
 fullstack portfolio project.
 
+**Live:** [finsight-one-eosin.vercel.app](https://finsight-one-eosin.vercel.app)
+(backend on Render, may take ~30s to wake up on the first request after a period of inactivity)
+
 ## What it does
 
 - Email/password auth with hashed passwords and JWT sessions in an httpOnly cookie
@@ -108,11 +111,16 @@ Postgres service container, so it never touches the real database.
 
 ## Deployment
 
-- **Database:** Neon (already set up for local dev — the same instance can back production)
-- **Backend:** Render (or any Node host) — set the env vars above, with `NODE_ENV=production`
-  and `FRONTEND_URL` set to the deployed frontend's URL
-- **Frontend:** Vercel — set `NEXT_PUBLIC_API_URL` to the deployed backend's URL
+- **Database:** [Neon](https://neon.tech) — the same instance backs both local dev and production
+- **Backend:** [Render](https://render.com), root directory `backend`, build `npm install`, start
+  `npm start`. Env vars: everything in `backend/.env`, plus `NODE_ENV=production` and
+  `FRONTEND_URL` set to the deployed frontend's URL
+- **Frontend:** [Vercel](https://vercel.com), root directory `frontend`. Env var:
+  `NEXT_PUBLIC_API_URL` set to the deployed backend's URL
 
 The auth cookie is `httpOnly` and cross-domain (frontend and backend live on different
 domains in this setup), so it requires `SameSite=None; Secure`, which only applies when
 `NODE_ENV=production` — see `backend/src/routes/auth.js`.
+
+Render's free tier spins the backend down after inactivity, so the first request after a
+while takes ~30s to wake it back up — everything after that is normal speed.
