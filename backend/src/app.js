@@ -17,7 +17,9 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Feature routes are mounted here as they're built (auth, categories, expenses, budgets, insights).
+app.use('/api/auth', require('./routes/auth'));
+
+// Feature routes are mounted here as they're built (categories, expenses, budgets, insights).
 
 // 404 handler for unmatched API routes
 app.use((req, res) => {
