@@ -7,10 +7,14 @@ const requireAuth = require('../middleware/auth');
 
 const router = express.Router();
 
+// In production the frontend (Vercel) and backend (Render) are on different
+// domains, so the cookie needs SameSite=None + Secure to be sent cross-site.
+// Locally, both run on localhost so Lax (and no Secure, since it's http) works.
+const isProduction = process.env.NODE_ENV === 'production';
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
