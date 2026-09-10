@@ -1,7 +1,11 @@
 import { formatCurrency, formatDateLabel } from '@/lib/formatters';
+import { useAuth } from '@/context/AuthContext';
 import EmptyState from '@/components/ui/EmptyState';
 
 export default function ExpenseTable({ expenses, onEdit, onDelete }) {
+  const { user } = useAuth();
+  const currency = user?.currency || 'USD';
+
   if (expenses.length === 0) {
     return (
       <EmptyState
@@ -39,7 +43,7 @@ export default function ExpenseTable({ expenses, onEdit, onDelete }) {
               </td>
               <td className="px-4 py-3 text-muted">{expense.description || '—'}</td>
               <td className="px-4 py-3 text-right font-medium text-foreground whitespace-nowrap">
-                {formatCurrency(expense.amount)}
+                {formatCurrency(expense.amount, currency)}
               </td>
               <td className="px-4 py-3">
                 <div className="flex justify-end gap-1">

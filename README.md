@@ -19,6 +19,8 @@ fullstack portfolio project.
 - One-click AI insights: the backend aggregates the month's category totals and sends only
   that summary (never raw transactions) to Gemini for a plain-English read on spending patterns
 - CSV export of the currently filtered expense list
+- Multi-currency display (USD, EUR, GBP, INR) — a per-user formatting preference, not live
+  exchange-rate conversion
 - Light/dark mode, responsive down to mobile, loading and empty states throughout
 
 ## Stack

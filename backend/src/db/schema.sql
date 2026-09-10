@@ -6,8 +6,16 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(100) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
+  -- Display-only preference (no exchange-rate conversion) — kept to a small
+  -- supported set, matching backend/src/utils/currencies.js.
+  currency VARCHAR(3) NOT NULL DEFAULT 'USD' CHECK (currency IN ('USD', 'EUR', 'GBP', 'INR')),
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- Adds `currency` to a users table that already existed before this column
+-- was introduced; a no-op on a fresh database where CREATE TABLE just added it.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS currency VARCHAR(3) NOT NULL DEFAULT 'USD'
+  CHECK (currency IN ('USD', 'EUR', 'GBP', 'INR'));
 
 CREATE TABLE IF NOT EXISTS categories (
   id SERIAL PRIMARY KEY,

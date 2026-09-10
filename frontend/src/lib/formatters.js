@@ -1,5 +1,8 @@
-export function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(amount));
+// Display formatting only — not a currency converter. `currency` is
+// whatever the logged-in user has selected (see context/AuthContext.js),
+// defaulting to USD before that's known.
+export function formatCurrency(amount, currency = 'USD') {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(amount));
 }
 
 export function getCurrentMonth() {

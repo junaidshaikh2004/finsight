@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { getCurrentMonth, formatCurrency, formatMonthLabel } from '@/lib/formatters';
+import { useAuth } from '@/context/AuthContext';
 import StatCard from '@/components/dashboard/StatCard';
 import CategoryBarChart from '@/components/dashboard/CategoryBarChart';
 import TrendChart from '@/components/dashboard/TrendChart';
@@ -10,6 +11,8 @@ import InsightsPanel from '@/components/dashboard/InsightsPanel';
 import Spinner from '@/components/ui/Spinner';
 
 export default function DashboardPage() {
+  const { user } = useAuth();
+  const currency = user?.currency || 'USD';
   const month = getCurrentMonth();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,12 +45,12 @@ export default function DashboardPage() {
       {!loading && !error && summary && (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <StatCard label="Total spent this month" value={formatCurrency(summary.totalThisMonth)} />
+            <StatCard label="Total spent this month" value={formatCurrency(summary.totalThisMonth, currency)} />
             <StatCard label="Categories with spending" value={summary.byCategory.length} />
             <StatCard
               label="Top category"
               value={summary.byCategory[0]?.category || '—'}
-              subtext={summary.byCategory[0] ? formatCurrency(summary.byCategory[0].total) : undefined}
+              subtext={summary.byCategory[0] ? formatCurrency(summary.byCategory[0].total, currency) : undefined}
             />
           </div>
 

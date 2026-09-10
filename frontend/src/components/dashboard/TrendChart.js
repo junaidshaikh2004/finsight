@@ -2,24 +2,28 @@
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 import { getSequentialColor, getChartChrome } from '@/lib/chartColors';
 import { formatCurrency, formatMonthLabel } from '@/lib/formatters';
+import { getCurrencySymbol } from '@/lib/currencies';
 import Card from '@/components/ui/Card';
 import EmptyState from '@/components/ui/EmptyState';
 
-function ChartTooltip({ active, payload }) {
+function ChartTooltip({ active, payload, currency }) {
   if (!active || !payload?.length) return null;
   const { month, total } = payload[0].payload;
   return (
     <div className="rounded-lg border border-border bg-surface px-3 py-2 text-sm shadow-md">
       <p className="font-medium text-foreground">{formatMonthLabel(month)}</p>
-      <p className="text-muted">{formatCurrency(total)}</p>
+      <p className="text-muted">{formatCurrency(total, currency)}</p>
     </div>
   );
 }
 
 export default function TrendChart({ data }) {
   const { theme } = useTheme();
+  const { user } = useAuth();
+  const currency = user?.currency || 'USD';
   const color = getSequentialColor(theme);
   const chrome = getChartChrome(theme);
   const hasData = data.some((row) => row.total > 0);
@@ -48,13 +52,13 @@ export default function TrendChart({ data }) {
                 tickLine={false}
               />
               <YAxis
-                tickFormatter={(v) => `$${v}`}
+                tickFormatter={(v) => `${getCurrencySymbol(currency)}${v}`}
                 tick={{ fill: chrome.muted, fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
                 width={56}
               />
-              <Tooltip content={<ChartTooltip />} />
+              <Tooltip content={<ChartTooltip currency={currency} />} />
               <Area
                 type="monotone"
                 dataKey="total"

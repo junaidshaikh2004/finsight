@@ -144,19 +144,26 @@ router.get('/export', async (req, res) => {
   const { month, category_id, search } = req.query;
   const { whereClause, params } = buildFilters(req.userId, { month, category_id, search });
 
-  const result = await pool.query(
-    `SELECT e.date, c.name AS category_name, e.amount, e.description, e.is_recurring
-     FROM expenses e
-     JOIN categories c ON c.id = e.category_id
-     WHERE ${whereClause}
-     ORDER BY e.date DESC, e.id DESC`,
-    params
-  );
+  const [userResult, result] = await Promise.all([
+    pool.query('SELECT currency FROM users WHERE id = $1', [req.userId]),
+    pool.query(
+      `SELECT e.date, c.name AS category_name, e.amount, e.description, e.is_recurring
+       FROM expenses e
+       JOIN categories c ON c.id = e.category_id
+       WHERE ${whereClause}
+       ORDER BY e.date DESC, e.id DESC`,
+      params
+    ),
+  ]);
+  // Amount stays a plain number (so it still sums/sorts correctly in a
+  // spreadsheet) — currency is its own column instead of a symbol prefix.
+  const rows = result.rows.map((row) => ({ ...row, currency: userResult.rows[0].currency }));
 
-  const csv = toCsv(result.rows, [
+  const csv = toCsv(rows, [
     { key: 'date', label: 'Date' },
     { key: 'category_name', label: 'Category' },
     { key: 'amount', label: 'Amount' },
+    { key: 'currency', label: 'Currency' },
     { key: 'description', label: 'Description' },
     { key: 'is_recurring', label: 'Recurring' },
   ]);

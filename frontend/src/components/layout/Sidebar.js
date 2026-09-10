@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from '@/components/layout/ThemeToggle';
+import CurrencySelector from '@/components/layout/CurrencySelector';
 
 const NAV_ITEMS = [
   {
@@ -68,7 +69,10 @@ export default function Sidebar({ onNavigate }) {
       </nav>
 
       <div className="border-t border-border px-3 py-4">
-        <div className="mb-2 truncate px-3 text-sm text-muted">{user?.name}</div>
+        <div className="mb-3 flex items-center justify-between px-3">
+          <span className="truncate text-sm text-muted">{user?.name}</span>
+          <CurrencySelector />
+        </div>
         <button
           onClick={logout}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface-hover hover:text-foreground"

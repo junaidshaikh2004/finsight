@@ -43,8 +43,16 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
+  async function updateCurrency(currency) {
+    const data = await apiFetch('/api/users/me', { method: 'PATCH', body: { currency } });
+    setUser(data.user);
+    return data.user;
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, signup, login, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, signup, login, logout, updateCurrency }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 

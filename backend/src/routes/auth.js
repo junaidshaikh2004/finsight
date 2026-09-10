@@ -35,7 +35,7 @@ router.post('/signup', async (req, res) => {
     await client.query('BEGIN');
 
     const userResult = await client.query(
-      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, created_at',
+      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, currency, created_at',
       [name, email, passwordHash]
     );
     const user = userResult.rows[0];
@@ -66,7 +66,7 @@ router.post('/login', async (req, res) => {
   }
 
   const result = await pool.query(
-    'SELECT id, name, email, password_hash FROM users WHERE email = $1',
+    'SELECT id, name, email, password_hash, currency FROM users WHERE email = $1',
     [email]
   );
   const user = result.rows[0];
@@ -79,14 +79,17 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
-  res.json({ user: { id: user.id, name: user.name, email: user.email }, token: signToken(user.id) });
+  res.json({
+    user: { id: user.id, name: user.name, email: user.email, currency: user.currency },
+    token: signToken(user.id),
+  });
 });
 
 // No /logout route: the token is a stateless JWT with nothing server-side to
 // invalidate, so logging out is purely a client-side action (drop the token).
 
 router.get('/me', requireAuth, async (req, res) => {
-  const result = await pool.query('SELECT id, name, email, created_at FROM users WHERE id = $1', [
+  const result = await pool.query('SELECT id, name, email, currency, created_at FROM users WHERE id = $1', [
     req.userId,
   ]);
   const user = result.rows[0];

@@ -1,4 +1,5 @@
 import { formatCurrency } from '@/lib/formatters';
+import { useAuth } from '@/context/AuthContext';
 import Card from '@/components/ui/Card';
 
 function statusFor(percent) {
@@ -8,6 +9,8 @@ function statusFor(percent) {
 }
 
 export default function BudgetCard({ budget, onDelete }) {
+  const { user } = useAuth();
+  const currency = user?.currency || 'USD';
   const percent = Math.min((budget.spent / budget.amount_limit) * 100, 100);
   const actualPercent = (budget.spent / budget.amount_limit) * 100;
   const status = statusFor(actualPercent);
@@ -18,7 +21,7 @@ export default function BudgetCard({ budget, onDelete }) {
         <div>
           <p className="font-medium text-foreground">{budget.category_name}</p>
           <p className="mt-0.5 text-sm text-muted">
-            {formatCurrency(budget.spent)} of {formatCurrency(budget.amount_limit)}
+            {formatCurrency(budget.spent, currency)} of {formatCurrency(budget.amount_limit, currency)}
           </p>
         </div>
         <button
