@@ -4,7 +4,7 @@ const app = require('../src/app');
 const pool = require('../src/db/pool');
 
 const testEmail = `jest_auth_${Date.now()}@example.com`;
-const agent = request.agent(app);
+let token;
 
 afterAll(async () => {
   await pool.query('DELETE FROM users WHERE email = $1', [testEmail]);
@@ -12,14 +12,18 @@ afterAll(async () => {
 });
 
 describe('Auth API', () => {
-  test('signup creates a user, seeds default categories, and sets a session cookie', async () => {
-    const res = await agent
+  test('signup creates a user, seeds default categories, and returns a bearer token (no cookie)', async () => {
+    const res = await request(app)
       .post('/api/auth/signup')
       .send({ name: 'Jest User', email: testEmail, password: 'password123' });
 
     expect(res.status).toBe(201);
     expect(res.body.user.email).toBe(testEmail);
-    expect(res.headers['set-cookie'][0]).toMatch(/^token=/);
+    expect(typeof res.body.token).toBe('string');
+    // Proves auth doesn't depend on a cookie at all (the cross-device bug this replaced).
+    expect(res.headers['set-cookie']).toBeUndefined();
+
+    token = res.body.token;
   });
 
   test('signup rejects a duplicate email', async () => {
@@ -38,15 +42,20 @@ describe('Auth API', () => {
     expect(res.status).toBe(400);
   });
 
-  test('/me returns the logged-in user via the session cookie', async () => {
-    const res = await agent.get('/api/auth/me');
+  test('/me returns the logged-in user via the Authorization header', async () => {
+    const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.user.email).toBe(testEmail);
   });
 
-  test('/me rejects a request with no session cookie', async () => {
+  test('/me rejects a request with no Authorization header', async () => {
     const res = await request(app).get('/api/auth/me');
+    expect(res.status).toBe(401);
+  });
+
+  test('/me rejects a malformed or invalid bearer token', async () => {
+    const res = await request(app).get('/api/auth/me').set('Authorization', 'Bearer not-a-real-token');
     expect(res.status).toBe(401);
   });
 
@@ -58,20 +67,14 @@ describe('Auth API', () => {
     expect(res.status).toBe(401);
   });
 
-  test('login succeeds with the correct password', async () => {
+  test('login succeeds with the correct password and returns a bearer token', async () => {
     const res = await request(app)
       .post('/api/auth/login')
       .send({ email: testEmail, password: 'password123' });
 
     expect(res.status).toBe(200);
     expect(res.body.user.email).toBe(testEmail);
-  });
-
-  test('logout clears the session so /me stops working', async () => {
-    const logoutRes = await agent.post('/api/auth/logout');
-    expect(logoutRes.status).toBe(200);
-
-    const meRes = await agent.get('/api/auth/me');
-    expect(meRes.status).toBe(401);
+    expect(typeof res.body.token).toBe('string');
+    expect(res.headers['set-cookie']).toBeUndefined();
   });
 });

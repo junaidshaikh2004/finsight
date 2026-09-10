@@ -1,17 +1,16 @@
 const express = require('express');
 const cors = require('cors');
-const cookieParser = require('cookie-parser');
 
 const app = express();
 
+// No `credentials: true` needed here — auth is a Bearer token the client
+// attaches itself, not a cookie the browser sends automatically.
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true,
   })
 );
 app.use(express.json());
-app.use(cookieParser());
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

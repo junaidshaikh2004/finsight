@@ -1,9 +1,15 @@
 const jwt = require('jsonwebtoken');
 
-// Reads the JWT from the httpOnly cookie set at login/signup and attaches
-// the user id to the request. Every protected route depends on this.
+// Reads the JWT from the Authorization header and attaches the user id to
+// the request. Every protected route depends on this.
+//
+// Not a cookie: frontend and backend live on different domains, and mobile
+// Safari/Chrome increasingly block cross-site cookies outright, which made
+// login silently fail to persist on phones while working fine on desktop.
+// A Bearer token the client attaches explicitly has no such restriction.
 function requireAuth(req, res, next) {
-  const token = req.cookies.token;
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (!token) {
     return res.status(401).json({ error: 'Not authenticated' });
   }

@@ -7,17 +7,6 @@ const requireAuth = require('../middleware/auth');
 
 const router = express.Router();
 
-// In production the frontend (Vercel) and backend (Render) are on different
-// domains, so the cookie needs SameSite=None + Secure to be sent cross-site.
-// Locally, both run on localhost so Lax (and no Secure, since it's http) works.
-const isProduction = process.env.NODE_ENV === 'production';
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? 'none' : 'lax',
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-};
-
 function signToken(userId) {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 }
@@ -60,9 +49,7 @@ router.post('/signup', async (req, res) => {
 
     await client.query('COMMIT');
 
-    const token = signToken(user.id);
-    res.cookie('token', token, COOKIE_OPTIONS);
-    res.status(201).json({ user });
+    res.status(201).json({ user, token: signToken(user.id) });
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
@@ -92,15 +79,11 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
-  const token = signToken(user.id);
-  res.cookie('token', token, COOKIE_OPTIONS);
-  res.json({ user: { id: user.id, name: user.name, email: user.email } });
+  res.json({ user: { id: user.id, name: user.name, email: user.email }, token: signToken(user.id) });
 });
 
-router.post('/logout', (req, res) => {
-  res.clearCookie('token', COOKIE_OPTIONS);
-  res.json({ success: true });
-});
+// No /logout route: the token is a stateless JWT with nothing server-side to
+// invalidate, so logging out is purely a client-side action (drop the token).
 
 router.get('/me', requireAuth, async (req, res) => {
   const result = await pool.query('SELECT id, name, email, created_at FROM users WHERE id = $1', [

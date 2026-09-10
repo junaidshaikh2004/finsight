@@ -8,7 +8,9 @@ fullstack portfolio project.
 
 ## What it does
 
-- Email/password auth with hashed passwords and JWT sessions in an httpOnly cookie
+- Email/password auth with hashed passwords and a JWT sent as a Bearer token, stored in
+  localStorage — not a cookie, since a cross-site cookie between the Vercel frontend and
+  Render backend gets silently blocked by mobile Safari/Chrome's tracking protection
 - Add, edit, and delete expenses; filter by month/category, search by description, paginate
 - Recurring expenses (weekly/monthly) that auto-generate their next instance on load — no cron job
 - Custom categories on top of eight seeded defaults
@@ -36,7 +38,7 @@ finsight/
     src/
       app.js              Express app, middleware, route mounting
       db/                 pg pool, schema.sql, migration script, default categories
-      middleware/auth.js  JWT cookie verification
+      middleware/auth.js  Bearer token verification
       routes/              auth, categories, expenses, budgets, insights
       utils/                CSV export, recurring-expense generation
     __tests__/            Jest + Supertest
@@ -90,7 +92,6 @@ The app runs on `http://localhost:3000` by default.
 | `GEMINI_API_KEY` | Google Gemini API key |
 | `GEMINI_MODEL` | Gemini model name to use for insights |
 | `FRONTEND_URL` | Frontend origin, used for CORS |
-| `NODE_ENV` | Set to `production` in deployment — switches the auth cookie to `SameSite=None; Secure` for the cross-domain frontend/backend split |
 
 **frontend/.env.local**
 
@@ -117,10 +118,6 @@ Postgres service container, so it never touches the real database.
   `FRONTEND_URL` set to the deployed frontend's URL
 - **Frontend:** [Vercel](https://vercel.com), root directory `frontend`. Env var:
   `NEXT_PUBLIC_API_URL` set to the deployed backend's URL
-
-The auth cookie is `httpOnly` and cross-domain (frontend and backend live on different
-domains in this setup), so it requires `SameSite=None; Secure`, which only applies when
-`NODE_ENV=production` — see `backend/src/routes/auth.js`.
 
 Render's free tier spins the backend down after inactivity, so the first request after a
 while takes ~30s to wake it back up — everything after that is normal speed.
