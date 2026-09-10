@@ -67,8 +67,13 @@ The app runs on `http://localhost:3000` by default.
 ## Testing
 
 ```bash
-cd backend && npm test
+cd backend && npm test    # Jest + Supertest: auth and expense CRUD
+cd frontend && npm test   # Jest + React Testing Library: ExpenseForm
 ```
+
+Backend tests run against whatever `DATABASE_URL` is in `backend/.env` — they create a
+uniquely-named test user per run and delete it afterward. CI instead spins up a throwaway
+Postgres service container, so it never touches the real database.
 
 ## Status
 
